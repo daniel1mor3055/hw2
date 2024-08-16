@@ -77,10 +77,7 @@ def train(args):
             losses.append(loss.item())
             loss.backward()
             optimizer.step()
-        print('Finished epoch:{} | Loss : {:.4f}'.format(
-            epoch_idx + 1,
-            np.mean(losses),
-        ))
+        print(f'Finished epoch: {epoch_idx + 1} | Loss : {np.mean(losses):.4f}')
         torch.save(model.state_dict(), os.path.join(train_config['task_name'],
                                                     train_config['ckpt_name']))
 

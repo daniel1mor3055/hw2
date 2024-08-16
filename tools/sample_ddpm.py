@@ -36,7 +36,7 @@ def sample(model, scheduler, train_config, model_config, diffusion_config):
         img = torchvision.transforms.ToPILImage()(grid)
         if not os.path.exists(os.path.join(train_config['task_name'], 'samples')):
             os.mkdir(os.path.join(train_config['task_name'], 'samples'))
-        img.save(os.path.join(train_config['task_name'], 'samples', 'x0_{}.png'.format(i)))
+        img.save(os.path.join(train_config['task_name'], 'samples', f'x0_{i}.png'))
         img.close()
 
 
