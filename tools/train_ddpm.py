@@ -8,7 +8,7 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from dataset.mnist_dataset import MnistDataset
+from dataset.mnist_dataset import FashionMnistDataset  # Updated import to use FashionMnistDataset
 from models.unet_base import Unet
 from scheduler.linear_noise_scheduler import LinearNoiseScheduler
 
@@ -35,8 +35,8 @@ def train(args):
                                      beta_end=diffusion_config['beta_end'])
 
     # Create the dataset
-    mnist = MnistDataset('train', '..')
-    mnist_loader = DataLoader(mnist, batch_size=train_config['batch_size'], shuffle=True, num_workers=4)
+    fashion_mnist = FashionMnistDataset('train', '..')  # Updated to use FashionMnistDataset
+    fashion_mnist_loader = DataLoader(fashion_mnist, batch_size=train_config['batch_size'], shuffle=True, num_workers=4)
 
     # Instantiate the model
     model = Unet(model_config).to(device)
@@ -59,7 +59,7 @@ def train(args):
     # Run training
     for epoch_idx in range(num_epochs):
         losses = []
-        for im in tqdm(mnist_loader):
+        for im in tqdm(fashion_mnist_loader):  # Updated to use FashionMnistLoader
             optimizer.zero_grad()
             im = im.float().to(device)
 

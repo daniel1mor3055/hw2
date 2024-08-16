@@ -1,5 +1,4 @@
 import os
-
 import torchvision
 from torch.utils.data import Dataset
 from torchvision import transforms
@@ -9,9 +8,9 @@ def scale_to_range(x):
     return (x * 2) - 1  # Scale to range [-1, 1]
 
 
-class MnistDataset(Dataset):
+class FashionMnistDataset(Dataset):
     r"""
-    Dataset class for MNIST images using torchvision's MNIST dataset.
+    Dataset class for Fashion-MNIST images using torchvision's FashionMNIST dataset.
     This class allows flexibility to switch to another dataset if needed.
     """
 
@@ -19,7 +18,7 @@ class MnistDataset(Dataset):
         r"""
         Init method for initializing the dataset properties
         :param split: 'train' or 'test' to specify the dataset split.
-        :param root_dir: Root directory for saving the MNIST data.
+        :param root_dir: Root directory for saving the Fashion-MNIST data.
         """
         self.split = split
         self.transform = transforms.Compose([
@@ -28,9 +27,9 @@ class MnistDataset(Dataset):
         ])
 
         # Ensure the directory structure is correct
-        data_dir = os.path.join(root_dir, 'data', 'mnist_data')
+        data_dir = os.path.join(root_dir, 'data', 'fashion_mnist_data')
 
-        self.dataset = torchvision.datasets.MNIST(
+        self.dataset = torchvision.datasets.FashionMNIST(
             root=data_dir,
             train=True if split == 'train' else False,
             download=True,
