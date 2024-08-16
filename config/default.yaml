@@ -1,5 +1,5 @@
 dataset_params:
-  im_path: 'data/train/images'
+  im_path: '../data/train/images'
 
 diffusion_params:
   num_timesteps : 1000
