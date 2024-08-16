@@ -35,7 +35,7 @@ def train(args):
                                      beta_end=diffusion_config['beta_end'])
 
     # Create the dataset
-    mnist = MnistDataset('train')
+    mnist = MnistDataset('train', '..')
     mnist_loader = DataLoader(mnist, batch_size=train_config['batch_size'], shuffle=True, num_workers=4)
 
     # Instantiate the model
