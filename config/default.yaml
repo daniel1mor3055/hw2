@@ -1,6 +1,3 @@
-dataset_params:
-  im_path: '../data/train/images'
-
 diffusion_params:
   num_timesteps : 1000
   beta_start : 0.0001

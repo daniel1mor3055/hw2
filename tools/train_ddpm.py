@@ -26,7 +26,6 @@ def train(args):
     ########################
 
     diffusion_config = config['diffusion_params']
-    dataset_config = config['dataset_params']
     model_config = config['model_params']
     train_config = config['train_params']
 
@@ -36,7 +35,7 @@ def train(args):
                                      beta_end=diffusion_config['beta_end'])
 
     # Create the dataset
-    mnist = MnistDataset('train', im_path=dataset_config['im_path'])
+    mnist = MnistDataset('train')
     mnist_loader = DataLoader(mnist, batch_size=train_config['batch_size'], shuffle=True, num_workers=4)
 
     # Instantiate the model

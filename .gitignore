@@ -5,7 +5,7 @@
 
 # Ignore pycharm and system files
 .DS_Store
-*.idea
+.idea/
 __pycache__
 *.zip
 
