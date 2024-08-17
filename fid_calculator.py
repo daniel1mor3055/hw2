@@ -1,9 +1,10 @@
 import os
+
 import torch
-from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
-from torchmetrics.image.fid import FrechetInceptionDistance
 from PIL import Image
+from torch.utils.data import DataLoader
+from torchmetrics.image.fid import FrechetInceptionDistance
+from torchvision import datasets, transforms
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -12,7 +13,7 @@ class FIDCalculator:
     def __init__(self, root_dir, batch_size=64):
         self.root_dir = root_dir
         self.batch_size = batch_size
-        self.fid = FrechetInceptionDistance().to(device)
+        self.fid = FrechetInceptionDistance(normalize=True).to(device)
         self.transform = transforms.Compose([
             transforms.Resize((299, 299)),
             transforms.ToTensor(),
@@ -32,8 +33,7 @@ class FIDCalculator:
 
         # Load generated images and update FID
         generated_images = self.load_generated_images(sampling_dir)
-        for img in generated_images:
-            self.fid.update(img.to(device), real=False)
+        self.fid.update(generated_images.to(device), real=False)
 
         # Compute FID
         fid_score = self.fid.compute()
@@ -56,7 +56,7 @@ if __name__ == "__main__":
     fid_calculator = FIDCalculator(root_dir=root_dir)
 
     # Calculate FID for different sampling configurations
-    for num_timesteps in [5, 10, 50, 200]:
+    for num_timesteps in [5, 10, 50, 200, 1000]:
         sampling_dir = os.path.join(output_dir, f"vanilla_sampling_{num_timesteps}")
         fid_score = fid_calculator.calculate_fid(sampling_dir)
         print(f"FID score for vanilla_sampling_{num_timesteps}: {fid_score:.4f}")
