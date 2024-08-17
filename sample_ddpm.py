@@ -38,7 +38,7 @@ def sample(model, scheduler, train_config, model_config, diffusion_config, save_
             noise_pred = model(xt, torch.as_tensor(i).unsqueeze(0).to(device))
 
             # Use scheduler to get x0 and xt-1
-            xt, x0_pred = scheduler.sample_prev_timestep(
+            xt, _ = scheduler.sample_prev_timestep(
                 xt, noise_pred, torch.as_tensor(i).to(device)
             )
 
