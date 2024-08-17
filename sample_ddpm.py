@@ -15,31 +15,38 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def sample(model, scheduler, train_config, model_config, diffusion_config, save_dir):
     r"""
     Sample stepwise by going backward one timestep at a time.
-    We save each image individually as x0 predictions
+    We save each image individually as x0 predictions in batches.
     """
-    xt = torch.randn(
-        (
-            train_config["num_samples"],
-            model_config["im_channels"],
-            model_config["im_size"],
-            model_config["im_size"],
-        )
-    ).to(device)
-    for i in tqdm(reversed(range(diffusion_config["num_timesteps"]))):
-        # Get prediction of noise
-        noise_pred = model(xt, torch.as_tensor(i).unsqueeze(0).to(device))
+    assert train_config["num_samples"] % train_config["sampling_batch_size"] == 0, ("num_samples must ba a multiple of "
+                                                                                    "sampling_batch_size")
+    batch_size = train_config["sampling_batch_size"]
+    num_batches = train_config["num_samples"] // batch_size
 
-        # Use scheduler to get x0 and xt-1
-        xt, x0_pred = scheduler.sample_prev_timestep(xt, noise_pred, torch.as_tensor(i).to(device))
+    for batch_idx in tqdm(range(num_batches)):
+        xt = torch.randn(
+            (
+                batch_size,
+                model_config["im_channels"],
+                model_config["im_size"],
+                model_config["im_size"],
+            )
+        ).to(device)
 
-    # Save each image individually
-    ims = torch.clamp(xt, -1.0, 1.0).detach().cpu()
-    ims = (ims + 1) / 2
+        for i in tqdm(reversed(range(diffusion_config["num_timesteps"]))):
+            # Get prediction of noise
+            noise_pred = model(xt, torch.as_tensor(i).unsqueeze(0).to(device))
 
-    for j in range(ims.size(0)):
-        img = torchvision.transforms.ToPILImage()(ims[j])
-        img.save(os.path.join(save_dir, f"sample_{j}.png"))
-        img.close()
+            # Use scheduler to get x0 and xt-1
+            xt, x0_pred = scheduler.sample_prev_timestep(xt, noise_pred, torch.as_tensor(i).to(device))
+
+        # Save each image individually
+        ims = torch.clamp(xt, -1.0, 1.0).detach().cpu()
+        ims = (ims + 1) / 2
+
+        for j in range(ims.size(0)):
+            img = torchvision.transforms.ToPILImage()(ims[j])
+            img.save(os.path.join(save_dir, f"sample_{batch_idx * batch_size + j}.png"))
+            img.close()
 
 
 def infer(args):
@@ -85,8 +92,9 @@ def infer(args):
         # Set directory name based on num_timesteps
         save_dir = os.path.join(train_config["task_name"], f"vanilla_sampling_{num_timesteps}")
 
-        # Ensure we create 50k images
-        train_config["num_samples"] = 50000
+        # Create output directories
+        if not os.path.exists(save_dir):
+            os.mkdir(save_dir)
 
         # Run sampling
         with torch.no_grad():

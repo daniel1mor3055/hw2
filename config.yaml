@@ -19,10 +19,11 @@ train_params:
   task_name: 'default'
   batch_size: 64
   num_epochs: 40
-  num_samples : 100
+  num_samples : 50000
   num_grid_rows : 10
   lr: 0.0001
   ckpt_name: 'ddpm_ckpt.pth'
+  sampling_batch_size: 100
 
 wandb:
   enable: false
