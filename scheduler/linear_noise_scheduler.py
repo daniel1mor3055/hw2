@@ -36,7 +36,6 @@ class LinearNoiseScheduler:
         # Reshape till (B,) becomes (B,1,1,1) if image is (B,C,H,W)
         for _ in range(len(original_shape) - 1):
             sqrt_alpha_cum_prod = sqrt_alpha_cum_prod.unsqueeze(-1)
-        for _ in range(len(original_shape) - 1):
             sqrt_one_minus_alpha_cum_prod = sqrt_one_minus_alpha_cum_prod.unsqueeze(-1)
 
         # Apply and Return Forward process equation
