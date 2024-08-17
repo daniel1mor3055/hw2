@@ -29,6 +29,14 @@ def train(args):
     model_config = config["model_params"]
     train_config = config["train_params"]
 
+    if config["wandb"]["enable"]:
+        import wandb
+        wandb.login(key="5fda0926085bc8963be5e43c4e501d992e35abe8")
+        wandb.init(
+            project=config["wandb"]["project_name"],
+            config=config
+        )
+
     # Create the noise scheduler
     scheduler = LinearNoiseScheduler(
         num_timesteps=diffusion_config["num_timesteps"],
@@ -85,12 +93,19 @@ def train(args):
             losses.append(loss.item())
             loss.backward()
             optimizer.step()
+
+        avg_loss = np.mean(losses)
         print(f"Finished epoch: {epoch_idx + 1} | Loss : {np.mean(losses):.4f}")
         torch.save(
             model.state_dict(), os.path.join(train_config["task_name"], train_config["ckpt_name"])
         )
 
+        if config["wandb"]["enable"]:
+            wandb.log({"loss": avg_loss, "epoch": epoch_idx + 1})
+
     print("Done Training ...")
+    if config["wandb"]["enable"]:
+        wandb.finish()
 
 
 if __name__ == "__main__":

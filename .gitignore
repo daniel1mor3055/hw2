@@ -22,3 +22,4 @@ __pycache__
 misc/
 .venv/
 data/
+concatenated_project.txt
