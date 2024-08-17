@@ -4,7 +4,6 @@ import os
 import torch
 import torchvision
 import yaml
-from torchvision.utils import make_grid
 from tqdm import tqdm
 
 from linear_noise_scheduler import LinearNoiseScheduler
@@ -13,10 +12,10 @@ from unet_base import Unet
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def sample(model, scheduler, train_config, model_config, diffusion_config):
+def sample(model, scheduler, train_config, model_config, diffusion_config, save_dir):
     r"""
     Sample stepwise by going backward one timestep at a time.
-    We save the x0 predictions
+    We save each image individually as x0 predictions
     """
     xt = torch.randn(
         (
@@ -33,14 +32,13 @@ def sample(model, scheduler, train_config, model_config, diffusion_config):
         # Use scheduler to get x0 and xt-1
         xt, x0_pred = scheduler.sample_prev_timestep(xt, noise_pred, torch.as_tensor(i).to(device))
 
-        # Save x0
-        ims = torch.clamp(xt, -1.0, 1.0).detach().cpu()
-        ims = (ims + 1) / 2
-        grid = make_grid(ims, nrow=train_config["num_grid_rows"])
-        img = torchvision.transforms.ToPILImage()(grid)
-        if not os.path.exists(os.path.join(train_config["task_name"], "samples")):
-            os.mkdir(os.path.join(train_config["task_name"], "samples"))
-        img.save(os.path.join(train_config["task_name"], "samples", f"x0_{i}.png"))
+    # Save each image individually
+    ims = torch.clamp(xt, -1.0, 1.0).detach().cpu()
+    ims = (ims + 1) / 2
+
+    for j in range(ims.size(0)):
+        img = torchvision.transforms.ToPILImage()(ims[j])
+        img.save(os.path.join(save_dir, f"sample_{j}.png"))
         img.close()
 
 
@@ -54,7 +52,6 @@ def infer(args):
     print(config)
     ########################
 
-    diffusion_config = config["diffusion_params"]
     model_config = config["model_params"]
     train_config = config["train_params"]
 
@@ -67,14 +64,33 @@ def infer(args):
     )
     model.eval()
 
-    # Create the noise scheduler
-    scheduler = LinearNoiseScheduler(
-        num_timesteps=diffusion_config["num_timesteps"],
-        beta_start=diffusion_config["beta_start"],
-        beta_end=diffusion_config["beta_end"],
-    )
-    with torch.no_grad():
-        sample(model, scheduler, train_config, model_config, diffusion_config)
+    # Iterate through different num_timesteps configurations
+    num_timesteps_list = [5, 10, 50, 200]
+
+    for num_timesteps in num_timesteps_list:
+        # Update diffusion_config with current num_timesteps
+        diffusion_config = {
+            "num_timesteps": num_timesteps,
+            "beta_start": config["diffusion_params"]["beta_start"],
+            "beta_end": config["diffusion_params"]["beta_end"],
+        }
+
+        # Create the noise scheduler
+        scheduler = LinearNoiseScheduler(
+            num_timesteps=diffusion_config["num_timesteps"],
+            beta_start=diffusion_config["beta_start"],
+            beta_end=diffusion_config["beta_end"],
+        )
+
+        # Set directory name based on num_timesteps
+        save_dir = os.path.join(train_config["task_name"], f"vanilla_sampling_{num_timesteps}")
+
+        # Ensure we create 50k images
+        train_config["num_samples"] = 50000
+
+        # Run sampling
+        with torch.no_grad():
+            sample(model, scheduler, train_config, model_config, diffusion_config, save_dir)
 
 
 if __name__ == "__main__":
