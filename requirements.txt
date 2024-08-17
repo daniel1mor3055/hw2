@@ -6,3 +6,4 @@ tqdm==4.66.5
 wandb==0.17.7
 torchmetrics==1.4.1
 torch-fidelity==0.3.0
+diffusers==0.30.0
