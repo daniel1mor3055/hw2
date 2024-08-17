@@ -8,9 +8,9 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from dataset.mnist_dataset import FashionMnistDataset  # Updated import to use FashionMnistDataset
-from models.unet_base import Unet
-from scheduler.linear_noise_scheduler import LinearNoiseScheduler
+from mnist_dataset import FashionMnistDataset  # Updated import to use FashionMnistDataset
+from unet_base import Unet
+from linear_noise_scheduler import LinearNoiseScheduler
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -37,7 +37,7 @@ def train(args):
     )
 
     # Create the dataset
-    fashion_mnist = FashionMnistDataset("train", "..")  # Updated to use FashionMnistDataset
+    fashion_mnist = FashionMnistDataset("train")  # Updated to use FashionMnistDataset
     fashion_mnist_loader = DataLoader(
         fashion_mnist, batch_size=train_config["batch_size"], shuffle=True, num_workers=4
     )
@@ -96,7 +96,7 @@ def train(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Arguments for ddpm training")
     parser.add_argument(
-        "--config", dest="config_path", default=os.path.relpath("../config/default.yaml"), type=str
+        "--config", dest="config_path", default=os.path.relpath("config.yaml"), type=str
     )
     args = parser.parse_args()
     train(args)
