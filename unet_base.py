@@ -180,31 +180,31 @@ class MidBlock(nn.Module):
         )
 
     def forward(self, x, t_emb):
-        out = x
+        out = x  # x.shape: (B, in_mid_C, H, W) t_emb.shape: (B, t_embed_size)
 
         # First resnet block
         resnet_input = out
-        out = self.resnet_conv_first[0](out)
-        out = out + self.t_emb_layers[0](t_emb)[:, :, None, None]
-        out = self.resnet_conv_second[0](out)
-        out = out + self.residual_input_conv[0](resnet_input)
+        out = self.resnet_conv_first[0](out)  # shape: (B, out_mid_C, H, W)
+        out = out + self.t_emb_layers[0](t_emb)[:, :, None, None]  # shape: (B, out_mid_C, H, W)
+        out = self.resnet_conv_second[0](out)  # shape: (B, out_mid_C, H, W)
+        out = out + self.residual_input_conv[0](resnet_input)  # shape: (B, out_mid_C, H, W)
 
         for i in range(self.num_layers):
             # Attention Block
             batch_size, channels, h, w = out.shape
-            in_attn = out.reshape(batch_size, channels, h * w)
-            in_attn = self.attention_norms[i](in_attn)
-            in_attn = in_attn.transpose(1, 2)
-            out_attn, _ = self.attentions[i](in_attn, in_attn, in_attn)
-            out_attn = out_attn.transpose(1, 2).reshape(batch_size, channels, h, w)
-            out = out + out_attn
+            in_attn = out.reshape(batch_size, channels, h * w)  # shape: (B, out_mid_C, H*W)
+            in_attn = self.attention_norms[i](in_attn)  # shape: (B, out_mid_C, H*W)
+            in_attn = in_attn.transpose(1, 2)  # shape: (B, L = H*W, out_mid_C)
+            out_attn, _ = self.attentions[i](in_attn, in_attn, in_attn)  # shape: (B, L = H*W, out_mid_C)
+            out_attn = out_attn.transpose(1, 2).reshape(batch_size, channels, h, w)  # shape: (B, out_mid_C, H,W)
+            out = out + out_attn  # shape: (B, out_mid_C, H,W)
 
             # Resnet Block
-            resnet_input = out
-            out = self.resnet_conv_first[i + 1](out)
-            out = out + self.t_emb_layers[i + 1](t_emb)[:, :, None, None]
-            out = self.resnet_conv_second[i + 1](out)
-            out = out + self.residual_input_conv[i + 1](resnet_input)
+            resnet_input = out  # shape: (B, out_mid_C , H,W)
+            out = self.resnet_conv_first[i + 1](out)  # shape: (B, out_mid_C , H,W)
+            out = out + self.t_emb_layers[i + 1](t_emb)[:, :, None, None]  # shape: (B, out_mid_C , H,W)
+            out = self.resnet_conv_second[i + 1](out)  # shape: (B, out_mid_C , H,W)
+            out = out + self.residual_input_conv[i + 1](resnet_input)  # shape: (B, out_mid_C , H,W)
 
         return out
 

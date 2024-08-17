@@ -8,9 +8,9 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+from linear_noise_scheduler import LinearNoiseScheduler
 from mnist_dataset import FashionMnistDataset  # Updated import to use FashionMnistDataset
 from unet_base import Unet
-from linear_noise_scheduler import LinearNoiseScheduler
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
