@@ -31,11 +31,9 @@ def train(args):
 
     if config["wandb"]["enable"]:
         import wandb
+
         wandb.login(key="5fda0926085bc8963be5e43c4e501d992e35abe8")
-        wandb.init(
-            project=config["wandb"]["project_name"],
-            config=config
-        )
+        wandb.init(project=config["wandb"]["project_name"], config=config)
 
     # Create the noise scheduler
     scheduler = LinearNoiseScheduler(
@@ -110,8 +108,6 @@ def train(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Arguments for ddpm training")
-    parser.add_argument(
-        "--config", dest="config_path", default="config.yaml", type=str
-    )
+    parser.add_argument("--config", dest="config_path", default="config.yaml", type=str)
     args = parser.parse_args()
     train(args)

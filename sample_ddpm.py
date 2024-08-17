@@ -17,8 +17,9 @@ def sample(model, scheduler, train_config, model_config, diffusion_config, save_
     Sample stepwise by going backward one timestep at a time.
     We save each image individually as x0 predictions in batches.
     """
-    assert train_config["num_samples"] % train_config["sampling_batch_size"] == 0, ("num_samples must ba a multiple of "
-                                                                                    "sampling_batch_size")
+    assert (
+        train_config["num_samples"] % train_config["sampling_batch_size"] == 0
+    ), "num_samples must ba a multiple of sampling_batch_size"
     batch_size = train_config["sampling_batch_size"]
     num_batches = train_config["num_samples"] // batch_size
 
@@ -37,7 +38,9 @@ def sample(model, scheduler, train_config, model_config, diffusion_config, save_
             noise_pred = model(xt, torch.as_tensor(i).unsqueeze(0).to(device))
 
             # Use scheduler to get x0 and xt-1
-            xt, x0_pred = scheduler.sample_prev_timestep(xt, noise_pred, torch.as_tensor(i).to(device))
+            xt, x0_pred = scheduler.sample_prev_timestep(
+                xt, noise_pred, torch.as_tensor(i).to(device)
+            )
 
         # Save each image individually
         ims = torch.clamp(xt, -1.0, 1.0).detach().cpu()
