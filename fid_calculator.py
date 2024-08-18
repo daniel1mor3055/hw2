@@ -56,7 +56,7 @@ if __name__ == "__main__":
     fid_calculator = FIDCalculator(root_dir=root_dir)
 
     # Calculate FID for different sampling configurations
-    for num_timesteps in [5, 10, 50, 200, 1000]:
+    for num_timesteps in [5, 10, 50, 200]:
         sampling_dir = os.path.join(output_dir, f"vanilla_sampling_{num_timesteps}")
         fid_score = fid_calculator.calculate_fid(sampling_dir)
         print(f"FID score for vanilla_sampling_{num_timesteps}: {fid_score:.4f}")
