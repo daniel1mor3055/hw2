@@ -1,10 +1,13 @@
+import argparse
 import os
 
 import torch
+import yaml
 from PIL import Image
 from torch.utils.data import DataLoader
 from torchmetrics.image.fid import FrechetInceptionDistance
-from torchvision import datasets, transforms
+
+from mnist_dataset import FashionMnistDataset
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -14,17 +17,11 @@ class FIDCalculator:
         self.root_dir = root_dir
         self.batch_size = batch_size
         self.fid = FrechetInceptionDistance(normalize=True).to(device)
-        self.transform = transforms.Compose([
-            transforms.Resize((299, 299)),
-            transforms.ToTensor(),
-            transforms.Lambda(lambda x: x.repeat(3, 1, 1)),  # Convert grayscale to 3 channels
-        ])
 
-    def calculate_fid(self, sampling_dir, split="train"):
-        # Load FashionMNIST training dataset
-        fashion_mnist = datasets.FashionMNIST(root=self.root_dir, train=(split == "train"),
-                                              download=True, transform=self.transform)
-        fashion_mnist_loader = DataLoader(fashion_mnist, batch_size=self.batch_size, shuffle=False)
+    def calculate_fid(self, sampling_dir, fashion_mnist):
+        fashion_mnist_loader = DataLoader(
+            fashion_mnist, batch_size=64, shuffle=True, num_workers=4
+        )
 
         # Update FID with FashionMNIST images
         for batch in fashion_mnist_loader:
@@ -44,19 +41,38 @@ class FIDCalculator:
         for img_file in sorted(os.listdir(sampling_dir)):
             img_path = os.path.join(sampling_dir, img_file)
             img = Image.open(img_path)
-            img = self.transform(img)
+            img = fashion_mnist.transform(img)
             img_list.append(img.unsqueeze(0))
         return torch.cat(img_list)
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Arguments for ddpm image generation")
+    parser.add_argument("--config", dest="config_path", default="config.yaml", type=str)
+    args = parser.parse_args()
+
     root_dir = "./data/fashion_mnist_data"
     output_dir = "./default"
 
+    # Read the config file #
+    with open(args.config_path, "r") as file:
+        try:
+            config = yaml.safe_load(file)
+        except yaml.YAMLError as exc:
+            print(exc)
+    print(config)
+    ########################
+
+    diffusion_config = config["diffusion_params"]
+    sampling_config = config["sampling_params"]
+
     fid_calculator = FIDCalculator(root_dir=root_dir)
+
+    # Load FashionMNIST training dataset
+    fashion_mnist = FashionMnistDataset("train")  # Updated to use FashionMnistDataset
 
     # Calculate FID for different sampling configurations
     for num_timesteps in [5, 10, 50, 200]:
-        sampling_dir = os.path.join(output_dir, f"vanilla_sampling_{num_timesteps}")
-        fid_score = fid_calculator.calculate_fid(sampling_dir)
+        sampling_dir = os.path.join(output_dir, f"{sampling_config['sampling_algorithm']}_sampling_{num_timesteps}")
+        fid_score = fid_calculator.calculate_fid(sampling_dir, fashion_mnist)
         print(f"FID score for vanilla_sampling_{num_timesteps}: {fid_score:.4f}")

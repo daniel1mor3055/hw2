@@ -48,6 +48,7 @@ def infer(args):
 
     model_config = config["model_params"]
     train_config = config["train_params"]
+    sampling_config = config["sampling_params"]
 
     # Load model with checkpoint
     model = Unet(model_config).to(device)
@@ -74,7 +75,7 @@ def infer(args):
         scheduler.config.algorithm_type = 'dpmsolver++'
 
         # Set directory name based on num_timesteps
-        save_dir = os.path.join(train_config["task_name"], f"dpm_plus_plus_sampling_{num_timesteps}")
+        save_dir = os.path.join(train_config["task_name"], f"{sampling_config['sampling_algorithm']}_sampling_{num_timesteps}")
 
         # Create output directories
         if not os.path.exists(save_dir):
