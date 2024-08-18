@@ -23,3 +23,4 @@ misc/
 .venv/
 data/
 concatenated_project.txt
+.idea/workspace.xml
