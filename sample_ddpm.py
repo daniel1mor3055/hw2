@@ -25,10 +25,10 @@ def sample(model, scheduler, config, save_dir):
                                                                                         "sampling_params")(config)
 
     assert (
-            train_config["num_samples"] % sampling_config["sampling_batch_size"] == 0
+            sampling_config["num_samples"] % sampling_config["sampling_batch_size"] == 0
     ), "num_samples must ba a multiple of sampling_batch_size"
     batch_size = sampling_config["sampling_batch_size"]
-    num_batches = train_config["num_samples"] // batch_size
+    num_batches = sampling_config["num_samples"] // batch_size
 
     for batch_idx in tqdm(range(num_batches)):
         xt = torch.randn(
@@ -83,22 +83,14 @@ def infer(args):
     model.eval()
 
     # Iterate through different num_timesteps configurations
-    num_timesteps_list = [5, 10, 50, 200]
+    num_timesteps_list = [5]
 
     for num_timesteps in num_timesteps_list:
         # Update diffusion_config with current num_timesteps
-        diffusion_config = {
-            "num_timesteps": num_timesteps,
-            "beta_start": config["diffusion_params"]["beta_start"],
-            "beta_end": config["diffusion_params"]["beta_end"],
-        }
+        config["diffusion_params"]["num_timesteps"] = num_timesteps
 
         # Create the noise scheduler
-        scheduler = LinearNoiseScheduler(
-            num_timesteps=diffusion_config["num_timesteps"],
-            beta_start=diffusion_config["beta_start"],
-            beta_end=diffusion_config["beta_end"],
-        )
+        scheduler = LinearNoiseScheduler(**config["diffusion_params"])
 
         # Set directory name based on num_timesteps
         save_dir = os.path.join(train_config["task_name"], f"{sampling_config['sampling_algorithm']}_sampling_{num_timesteps}")
