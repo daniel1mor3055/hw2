@@ -39,7 +39,7 @@ def train(args):
     # Create the dataset
     fashion_mnist = FashionMnistDataset("train")  # Updated to use FashionMnistDataset
     fashion_mnist_loader = DataLoader(
-        fashion_mnist, batch_size=train_config["batch_size"], shuffle=True, num_workers=4
+        fashion_mnist, batch_size=train_config["batch_size"], shuffle=True, num_workers=10
     )
 
     # Instantiate the model
@@ -65,7 +65,8 @@ def train(args):
     criterion = torch.nn.MSELoss()
 
     # Run training
-    for epoch_idx in range(num_epochs):
+    best_loss = np.inf
+    for epoch_idx in tqdm(range(num_epochs)):
         losses = []
         for im in tqdm(fashion_mnist_loader):  # Updated to use FashionMnistLoader
             optimizer.zero_grad()
@@ -85,10 +86,15 @@ def train(args):
             losses.append(loss.item())
             loss.backward()
             optimizer.step()
-        print(f"Finished epoch: {epoch_idx + 1} | Loss : {np.mean(losses):.4f}")
-        torch.save(
-            model.state_dict(), os.path.join(train_config["task_name"], train_config["ckpt_name"])
-        )
+        avg_loss = np.mean(losses)
+        print(f"Finished epoch: {epoch_idx + 1} | Loss : {avg_loss:.4f}")
+        if avg_loss < best_loss:
+            best_loss = avg_loss
+            torch.save(
+                model.state_dict(),
+                os.path.join(train_config["task_name"], train_config["ckpt_name"]),
+            )
+            print(f"Saving model with best loss yet: {best_loss:.4f}")
 
     print("Done Training ...")
 
