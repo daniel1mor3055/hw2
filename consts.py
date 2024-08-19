@@ -5,7 +5,7 @@ from typing import List
 @dataclass
 class ModelParams:
     im_channels: int = 1
-    im_size: int = 28  # Added based on ground truth
+    im_size: int = 28
     down_channels: List[int] = field(default_factory=lambda: [32, 64, 128, 256])
     mid_channels: List[int] = field(default_factory=lambda: [256, 256, 128])
     time_emb_dim: int = 128
@@ -13,7 +13,7 @@ class ModelParams:
     num_down_layers: int = 2
     num_mid_layers: int = 2
     num_up_layers: int = 2
-    num_heads: int = 4  # Added based on ground truth
+    num_heads: int = 4
 
 
 @dataclass
@@ -21,8 +21,7 @@ class DiffusionParams:
     num_timesteps: int = 200
     beta_start: float = 0.0001
     beta_end: float = 0.02
-    num_timesteps_list: List[int] = field(
-        default_factory=lambda: [5, 10, 50, 200])  # Preserving the original list as a fallback
+    num_timesteps_list: List[int] = field(default_factory=lambda: [5, 10, 50, 200])
 
 
 @dataclass
@@ -56,5 +55,4 @@ class Config:
     wandb: WandBParams = WandBParams()
 
 
-# Config instance with values from ground truth
 config = Config()

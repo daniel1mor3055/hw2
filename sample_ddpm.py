@@ -41,7 +41,6 @@ def sample(model, scheduler, config, save_dir):
             # Use scheduler to get x0 and xt-1
             xt, _ = scheduler.sample_prev_timestep(xt, noise_pred, torch.as_tensor(i).to(device))
 
-        # Save each image individually
         ims = torch.clamp(xt, -1.0, 1.0).detach().cpu()
         ims = (ims + 1) / 2
 
@@ -56,7 +55,6 @@ def infer():
     train_config = config.train_params
     sampling_config = config.sampling_params
 
-    # Load model with checkpoint
     model = Unet(model_config).to(device)
     model.load_state_dict(
         torch.load(
@@ -65,27 +63,22 @@ def infer():
     )
     model.eval()
 
-    # Iterate through different num_timesteps configurations
     for num_timesteps in config.diffusion_params.num_timesteps_list:
         # Update diffusion_config with current num_timesteps
         config.diffusion_params.num_timesteps = num_timesteps
 
-        # Create the noise scheduler
         scheduler = LinearNoiseScheduler(
             config.diffusion_params
         )
 
-        # Set directory name based on num_timesteps
         save_dir = os.path.join(
             train_config.task_name,
             f"{sampling_config.sampling_algorithm}_sampling_{num_timesteps}",
         )
 
-        # Create output directories
         if not os.path.exists(save_dir):
             os.mkdir(save_dir)
 
-        # Run sampling
         with torch.no_grad():
             sample(model, scheduler, config, save_dir)
 

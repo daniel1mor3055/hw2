@@ -24,44 +24,35 @@ def train():
         wandb.login(key="5fda0926085bc8963be5e43c4e501d992e35abe8")
         wandb.init(project=config.wandb.project_name, config=config)
 
-    # Create the noise scheduler
     scheduler = LinearNoiseScheduler(diffusion_config)
 
-    # Create the dataset
     fashion_mnist = FashionMnistDataset("train")
     fashion_mnist_loader = DataLoader(
         fashion_mnist, batch_size=train_config.batch_size, shuffle=True, num_workers=4
     )
 
-    # Instantiate the model
     model = Unet(model_config).to(device)
     model.train()
 
-    # Create output directories
     if not os.path.exists(train_config.task_name):
         os.mkdir(train_config.task_name)
 
-    # Specify training parameters
     num_epochs = train_config.num_epochs
     optimizer = Adam(model.parameters(), lr=train_config.lr)
     criterion = torch.nn.MSELoss()
 
     best_loss = float('inf')
 
-    # Run training
     for epoch_idx in range(num_epochs):
         losses = []
         for im in tqdm(fashion_mnist_loader):
             optimizer.zero_grad()
             im = im.float().to(device)
 
-            # Sample random noise
             noise = torch.randn_like(im).to(device)
 
-            # Sample timestep
             t = torch.randint(0, diffusion_config.num_timesteps, (im.shape[0],)).to(device)
 
-            # Add noise to images according to timestep
             noisy_im = scheduler.add_noise(im, noise, t)
             noise_pred = model(noisy_im, t)
 
@@ -73,7 +64,6 @@ def train():
         avg_loss = np.mean(losses)
         print(f"Finished epoch: {epoch_idx + 1} | Loss : {avg_loss:.4f}")
 
-        # Save the model if the current loss is the best we've seen so far
         if avg_loss < best_loss:
             best_loss = avg_loss
             print(f"New best model found at epoch {epoch_idx + 1}, saving model.")

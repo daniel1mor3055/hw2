@@ -32,7 +32,6 @@ class FashionMnistDataset(Dataset):
         self.split = split
         self.transform = transform
 
-        # Ensure the directory structure is correct
         data_dir = os.path.join(root_dir, "data", "fashion_mnist_data")
 
         self.dataset = torchvision.datasets.FashionMNIST(

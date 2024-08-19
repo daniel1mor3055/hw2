@@ -40,7 +40,6 @@ class LinearNoiseScheduler:
             sqrt_alpha_cum_prod = sqrt_alpha_cum_prod.unsqueeze(-1)
             sqrt_one_minus_alpha_cum_prod = sqrt_one_minus_alpha_cum_prod.unsqueeze(-1)
 
-        # Apply and Return Forward process equation
         return (
                 sqrt_alpha_cum_prod.to(original.device) * original
                 + sqrt_one_minus_alpha_cum_prod.to(original.device) * noise
@@ -75,8 +74,4 @@ class LinearNoiseScheduler:
             sigma = variance ** 0.5
             z = torch.randn(xt.shape).to(xt.device)
 
-            # OR
-            # variance = self.betas[t]
-            # sigma = variance ** 0.5
-            # z = torch.randn(xt.shape).to(xt.device)
             return mean + sigma * z, x0
