@@ -35,7 +35,7 @@ class FIDCalculator:
         fashion_mnist_loader = DataLoader(fashion_mnist, batch_size=config.train_params.batch_size, shuffle=True,
                                           num_workers=4)
 
-        self.load_generated_images(sampling_dir, self.fid)
+        self.load_generated_images(sampling_dir)
         for batch in tqdm(fashion_mnist_loader, desc="Real images"):
             images = batch
             self.fid.update(images.to(device), real=True)
@@ -43,7 +43,7 @@ class FIDCalculator:
         fid_score = self.fid.compute()
         return fid_score.item()
 
-    def load_generated_images(self, sampling_dir, fid, batch_size=100):
+    def load_generated_images(self, sampling_dir):
         batch = []
         for img_file in tqdm(sorted(os.listdir(sampling_dir)), desc="Generated images"):
             img_path = os.path.join(sampling_dir, img_file)
@@ -52,12 +52,12 @@ class FIDCalculator:
             img = img.unsqueeze(0).to(device)
             batch.append(img)
 
-            if len(batch) == batch_size:
-                fid.update(torch.cat(batch), real=False)
+            if len(batch) == config.sampling_params.sampling_batch_size:
+                self.fid.update(torch.cat(batch), real=False)
                 batch = []
 
         if batch:
-            fid.update(torch.cat(batch), real=False)
+            self.fid.update(torch.cat(batch), real=False)
 
 
 if __name__ == "__main__":

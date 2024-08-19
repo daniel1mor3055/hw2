@@ -24,13 +24,12 @@ def sample(model, scheduler, config, save_dir):
     assert (sampling_config.num_samples % sampling_config.sampling_batch_size == 0), \
         "num_samples must ba a multiple of sampling_batch_size"
 
-    batch_size = sampling_config.sampling_batch_size
-    num_batches = sampling_config.num_samples // batch_size
+    num_batches = sampling_config.num_samples // sampling_config.sampling_batch_size
 
     for batch_idx in tqdm(range(num_batches)):
         xt = torch.randn(
             (
-                batch_size,
+                sampling_config.sampling_batch_size,
                 model_config.im_channels,
                 model_config.im_size,
                 model_config.im_size,
@@ -49,7 +48,7 @@ def sample(model, scheduler, config, save_dir):
 
         for j in range(ims.size(0)):
             img = torchvision.transforms.ToPILImage()(ims[j])
-            img.save(os.path.join(save_dir, f"sample_{batch_idx * batch_size + j}.png"))
+            img.save(os.path.join(save_dir, f"sample_{batch_idx * sampling_config.sampling_batch_size + j}.png"))
             img.close()
 
 
