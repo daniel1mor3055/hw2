@@ -11,7 +11,7 @@ from unet_base import Unet
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def sample(model, scheduler, config, save_dir, num_timesteps):
+def sample(model, config, save_dir, num_timesteps):
     r"""
     Sample stepwise by going backward one timestep at a time.
     We save each image individually as x0 predictions in batches.
@@ -26,6 +26,9 @@ def sample(model, scheduler, config, save_dir, num_timesteps):
     num_batches = sampling_config.num_samples // sampling_config.sampling_batch_size
 
     for batch_idx in tqdm(range(num_batches)):
+        # Create the noise scheduler
+        scheduler = DPMSolverMultistepScheduler(num_train_timesteps=config.diffusion_params.num_timesteps)
+        scheduler.config.algorithm_type = "dpmsolver++"
         scheduler.set_timesteps(num_timesteps)
 
         xt = torch.randn(
@@ -69,10 +72,6 @@ def infer():
 
     # Iterate through different num_timesteps configurations
     for num_timesteps in config.diffusion_params.num_timesteps_list:
-        # Create the noise scheduler
-        scheduler = DPMSolverMultistepScheduler(num_train_timesteps=config.diffusion_params.num_timesteps)
-        scheduler.config.algorithm_type = "dpmsolver++"
-
         # Set directory name based on num_timesteps
         save_dir = os.path.join(
             train_config.task_name,
@@ -83,7 +82,7 @@ def infer():
             os.mkdir(save_dir)
 
         with torch.no_grad():
-            sample(model, scheduler, config, save_dir, num_timesteps)
+            sample(model, config, save_dir, num_timesteps)
 
 
 if __name__ == "__main__":
