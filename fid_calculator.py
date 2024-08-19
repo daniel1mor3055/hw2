@@ -2,11 +2,13 @@ import argparse
 import os
 
 import torch
+from tqdm import tqdm
 import yaml
 from PIL import Image
 from torch.utils.data import DataLoader
 from torchmetrics.image.fid import FrechetInceptionDistance
 from torchvision import transforms
+from consts import num_timesteps_list
 
 from mnist_dataset import FashionMnistDataset
 
@@ -22,38 +24,46 @@ class FIDCalculator:
         self.root_dir = root_dir
         self.batch_size = batch_size
         self.fid = FrechetInceptionDistance(normalize=True).to(device)
-        self.transform = transforms.Compose([
-            transforms.Resize((299, 299)),
-            transforms.ToTensor(),
-            transforms.Lambda(transform_lambda),  # Convert grayscale to 3 channels
-        ])
 
-    def calculate_fid(self, sampling_dir, fashion_mnist):
-        fashion_mnist_loader = DataLoader(
-            fashion_mnist, batch_size=64, shuffle=True, num_workers=4
+        self.transform = transforms.Compose(
+            [
+                transforms.Resize((299, 299)),
+                transforms.ToTensor(),
+                transforms.Lambda(transform_lambda),  # Convert grayscale to 3 channels
+            ]
         )
 
-        # Update FID with FashionMNIST images
-        for batch in fashion_mnist_loader:
-            images = batch
-            self.fid.update(images.to(device), real=True)
+    def calculate_fid(self, sampling_dir, fashion_mnist):
+        fashion_mnist_loader = DataLoader(fashion_mnist, batch_size=64, shuffle=True, num_workers=4)
 
         # Load generated images and update FID
-        generated_images = self.load_generated_images(sampling_dir)
-        self.fid.update(generated_images.to(device), real=False)
+        self.load_generated_images(sampling_dir, self.fid)
+        # Update FID with FashionMNIST images
+        for batch in tqdm(fashion_mnist_loader, desc="Real images"):
+            images = batch
+            self.fid.update(images.to(device), real=True)
 
         # Compute FID
         fid_score = self.fid.compute()
         return fid_score.item()
 
-    def load_generated_images(self, sampling_dir):
-        img_list = []
-        for img_file in sorted(os.listdir(sampling_dir)):
+    def load_generated_images(self, sampling_dir, fid, batch_size=100):
+        batch = []
+        for img_file in tqdm(sorted(os.listdir(sampling_dir)), desc="Generated images"):
             img_path = os.path.join(sampling_dir, img_file)
             img = Image.open(img_path)
             img = self.transform(img)
-            img_list.append(img.unsqueeze(0))
-        return torch.cat(img_list)
+            img = img.unsqueeze(0).to(device)
+            batch.append(img)
+
+            # Update FID when the batch is full
+            if len(batch) == batch_size:
+                fid.update(torch.cat(batch), real=False)
+                batch = []
+
+        # Update FID with any remaining images in the last batch
+        if batch:
+            fid.update(torch.cat(batch), real=False)
 
 
 if __name__ == "__main__":
@@ -79,11 +89,15 @@ if __name__ == "__main__":
     fid_calculator = FIDCalculator(root_dir=root_dir)
 
     # Load FashionMNIST training dataset
-    fashion_mnist = FashionMnistDataset("train",
-                                        transform=fid_calculator.transform)  # Updated to use FashionMnistDataset
+    fashion_mnist = FashionMnistDataset(
+        "train", transform=fid_calculator.transform
+    )  # Updated to use FashionMnistDataset
 
     # Calculate FID for different sampling configurations
-    for num_timesteps in [5]:
-        sampling_dir = os.path.join(output_dir, f"{sampling_config['sampling_algorithm']}_sampling_{num_timesteps}")
+    for num_timesteps in num_timesteps_list:
+        sampling_dir = os.path.join(
+            output_dir, f"{sampling_config['sampling_algorithm']}_sampling_{num_timesteps}"
+        )
+        print(f"Calculating FID for {sampling_dir}")
         fid_score = fid_calculator.calculate_fid(sampling_dir, fashion_mnist)
         print(f"FID score for vanilla_sampling_{num_timesteps}: {fid_score:.4f}")

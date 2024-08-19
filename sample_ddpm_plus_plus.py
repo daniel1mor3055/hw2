@@ -2,13 +2,12 @@ import argparse
 import os
 
 import torch
-import torchvision
 import yaml
 from PIL import Image
 from tqdm import tqdm
+from consts import num_timesteps_list
 
-from linear_noise_scheduler import LinearNoiseScheduler
-from diffusers import DiffusionPipeline, DPMSolverMultistepScheduler
+from diffusers import DPMSolverMultistepScheduler
 from unet_base import Unet
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -60,7 +59,6 @@ def infer(args):
     model.eval()
 
     # Iterate through different num_timesteps configurations
-    num_timesteps_list = [5, 10, 50, 200]
 
     for num_timesteps in num_timesteps_list:
         # Update diffusion_config with current num_timesteps
@@ -72,10 +70,13 @@ def infer(args):
 
         # Create the noise scheduler
         scheduler = DPMSolverMultistepScheduler()
-        scheduler.config.algorithm_type = 'dpmsolver++'
+        scheduler.config.algorithm_type = "dpmsolver++"
 
         # Set directory name based on num_timesteps
-        save_dir = os.path.join(train_config["task_name"], f"{sampling_config['sampling_algorithm']}_sampling_{num_timesteps}")
+        save_dir = os.path.join(
+            train_config["task_name"],
+            f"{sampling_config['sampling_algorithm']}_sampling_{num_timesteps}",
+        )
 
         # Create output directories
         if not os.path.exists(save_dir):

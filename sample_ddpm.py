@@ -6,6 +6,7 @@ import torch
 import torchvision
 import yaml
 from tqdm import tqdm
+from consts import num_timesteps_list
 
 from linear_noise_scheduler import LinearNoiseScheduler
 from unet_base import Unet
@@ -19,13 +20,12 @@ def sample(model, scheduler, config, save_dir):
     We save each image individually as x0 predictions in batches.
     """
 
-    train_config, model_config, diffusion_config, sampling_config = operator.itemgetter("train_params",
-                                                                                        "model_params",
-                                                                                        "diffusion_params",
-                                                                                        "sampling_params")(config)
+    train_config, model_config, diffusion_config, sampling_config = operator.itemgetter(
+        "train_params", "model_params", "diffusion_params", "sampling_params"
+    )(config)
 
     assert (
-            sampling_config["num_samples"] % sampling_config["sampling_batch_size"] == 0
+        sampling_config["num_samples"] % sampling_config["sampling_batch_size"] == 0
     ), "num_samples must ba a multiple of sampling_batch_size"
     batch_size = sampling_config["sampling_batch_size"]
     num_batches = sampling_config["num_samples"] // batch_size
@@ -40,14 +40,12 @@ def sample(model, scheduler, config, save_dir):
             )
         ).to(device)
 
-        for i in tqdm(reversed(range(diffusion_config["num_timesteps"]))):
+        for i in reversed(range(diffusion_config["num_timesteps"])):
             # Get prediction of noise
             noise_pred = model(xt, torch.as_tensor(i).unsqueeze(0).to(device))
 
             # Use scheduler to get x0 and xt-1
-            xt, _ = scheduler.sample_prev_timestep(
-                xt, noise_pred, torch.as_tensor(i).to(device)
-            )
+            xt, _ = scheduler.sample_prev_timestep(xt, noise_pred, torch.as_tensor(i).to(device))
 
         # Save each image individually
         ims = torch.clamp(xt, -1.0, 1.0).detach().cpu()
@@ -83,8 +81,6 @@ def infer(args):
     model.eval()
 
     # Iterate through different num_timesteps configurations
-    num_timesteps_list = [5]
-
     for num_timesteps in num_timesteps_list:
         # Update diffusion_config with current num_timesteps
         config["diffusion_params"]["num_timesteps"] = num_timesteps
@@ -93,7 +89,10 @@ def infer(args):
         scheduler = LinearNoiseScheduler(**config["diffusion_params"])
 
         # Set directory name based on num_timesteps
-        save_dir = os.path.join(train_config["task_name"], f"{sampling_config['sampling_algorithm']}_sampling_{num_timesteps}")
+        save_dir = os.path.join(
+            train_config["task_name"],
+            f"{sampling_config['sampling_algorithm']}_sampling_{num_timesteps}",
+        )
 
         # Create output directories
         if not os.path.exists(save_dir):
