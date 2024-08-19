@@ -72,9 +72,7 @@ def infer():
 
         # Create the noise scheduler
         scheduler = LinearNoiseScheduler(
-            num_timesteps=config.diffusion_params.num_timesteps,
-            beta_start=config.diffusion_params.beta_start,
-            beta_end=config.diffusion_params.beta_end
+            config.diffusion_params
         )
 
         # Set directory name based on num_timesteps

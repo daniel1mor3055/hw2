@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+from consts import ModelParams
+
 
 def get_time_embedding(time_steps, temb_dim):
     r"""
@@ -15,8 +17,8 @@ def get_time_embedding(time_steps, temb_dim):
     # factor = 10000^(2i/d_model)
     factor = 10000 ** (
         (
-            torch.arange(start=0, end=temb_dim // 2, dtype=torch.float32, device=time_steps.device)
-            / (temb_dim // 2)
+                torch.arange(start=0, end=temb_dim // 2, dtype=torch.float32, device=time_steps.device)
+                / (temb_dim // 2)
         )
     )
 
@@ -37,7 +39,7 @@ class DownBlock(nn.Module):
     """
 
     def __init__(
-        self, in_channels, out_channels, t_emb_dim, down_sample=True, num_heads=4, num_layers=1
+            self, in_channels, out_channels, t_emb_dim, down_sample=True, num_heads=4, num_layers=1
     ):
         super().__init__()
         self.num_layers = num_layers
@@ -211,7 +213,7 @@ class MidBlock(nn.Module):
             resnet_input = out  # shape: (B, out_mid_C , H,W)
             out = self.resnet_conv_first[i + 1](out)  # shape: (B, out_mid_C , H,W)
             out = (
-                out + self.t_emb_layers[i + 1](t_emb)[:, :, None, None]
+                    out + self.t_emb_layers[i + 1](t_emb)[:, :, None, None]
             )  # shape: (B, out_mid_C , H,W)
             out = self.resnet_conv_second[i + 1](out)  # shape: (B, out_mid_C , H,W)
             out = out + self.residual_input_conv[i + 1](resnet_input)  # shape: (B, out_mid_C , H,W)
@@ -230,7 +232,7 @@ class UpBlock(nn.Module):
     """
 
     def __init__(
-        self, in_channels, out_channels, t_emb_dim, up_sample=True, num_heads=4, num_layers=1
+            self, in_channels, out_channels, t_emb_dim, up_sample=True, num_heads=4, num_layers=1
     ):
         super().__init__()
         self.num_layers = num_layers
@@ -319,16 +321,16 @@ class Unet(nn.Module):
     Down blocks, Midblocks and Uplocks
     """
 
-    def __init__(self, model_config):
+    def __init__(self, model_params: ModelParams):
         super().__init__()
-        im_channels = model_config["im_channels"]
-        self.down_channels = model_config["down_channels"]
-        self.mid_channels = model_config["mid_channels"]
-        self.t_emb_dim = model_config["time_emb_dim"]
-        self.down_sample = model_config["down_sample"]
-        self.num_down_layers = model_config["num_down_layers"]
-        self.num_mid_layers = model_config["num_mid_layers"]
-        self.num_up_layers = model_config["num_up_layers"]
+        self.im_channels = model_params.im_channels
+        self.down_channels = model_params.down_channels
+        self.mid_channels = model_params.mid_channels
+        self.t_emb_dim = model_params.time_emb_dim
+        self.down_sample = model_params.down_sample
+        self.num_down_layers = model_params.num_down_layers
+        self.num_mid_layers = model_params.num_mid_layers
+        self.num_up_layers = model_params.num_up_layers
 
         assert self.mid_channels[0] == self.down_channels[-1]
         assert self.mid_channels[-1] == self.down_channels[-2]
@@ -342,7 +344,7 @@ class Unet(nn.Module):
         )
 
         self.up_sample = list(reversed(self.down_sample))
-        self.conv_in = nn.Conv2d(im_channels, self.down_channels[0], kernel_size=3, padding=(1, 1))
+        self.conv_in = nn.Conv2d(self.im_channels, self.down_channels[0], kernel_size=3, padding=(1, 1))
 
         self.downs = nn.ModuleList([])
         for i in range(len(self.down_channels) - 1):
@@ -380,7 +382,7 @@ class Unet(nn.Module):
             )
 
         self.norm_out = nn.GroupNorm(8, 16)
-        self.conv_out = nn.Conv2d(16, im_channels, kernel_size=3, padding=1)
+        self.conv_out = nn.Conv2d(16, self.im_channels, kernel_size=3, padding=1)
 
     def forward(self, x, t):
         # Shapes assuming downblocks are [C1, C2, C3, C4]

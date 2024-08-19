@@ -26,9 +26,7 @@ def train():
 
     # Create the noise scheduler
     scheduler = LinearNoiseScheduler(
-        num_timesteps=diffusion_config.num_timesteps,
-        beta_start=diffusion_config.beta_start,
-        beta_end=diffusion_config.beta_end,
+        diffusion_config
     )
 
     # Create the dataset

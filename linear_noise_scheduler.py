@@ -1,17 +1,19 @@
 import torch
 
+from consts import DiffusionParams
+
 
 class LinearNoiseScheduler:
     r"""
     Class for the linear noise scheduler that is used in DDPM.
     """
 
-    def __init__(self, num_timesteps, beta_start, beta_end):
-        self.num_timesteps = num_timesteps
-        self.beta_start = beta_start
-        self.beta_end = beta_end
+    def __init__(self, diffusion_params: DiffusionParams):
+        self.num_timesteps = diffusion_params.num_timesteps
+        self.beta_start = diffusion_params.beta_start
+        self.beta_end = diffusion_params.beta_end
 
-        self.betas = torch.linspace(beta_start, beta_end, num_timesteps)
+        self.betas = torch.linspace(self.beta_start, self.beta_end, self.num_timesteps)
         self.alphas = 1.0 - self.betas
         self.alpha_cum_prod = torch.cumprod(self.alphas, dim=0)
         self.sqrt_alpha_cum_prod = torch.sqrt(self.alpha_cum_prod)
@@ -40,8 +42,8 @@ class LinearNoiseScheduler:
 
         # Apply and Return Forward process equation
         return (
-            sqrt_alpha_cum_prod.to(original.device) * original
-            + sqrt_one_minus_alpha_cum_prod.to(original.device) * noise
+                sqrt_alpha_cum_prod.to(original.device) * original
+                + sqrt_one_minus_alpha_cum_prod.to(original.device) * noise
         )
 
     def sample_prev_timestep(self, xt, noise_pred, t):
@@ -67,10 +69,10 @@ class LinearNoiseScheduler:
             return mean, x0
         else:
             variance = (1 - self.alpha_cum_prod.to(xt.device)[t - 1]) / (
-                1.0 - self.alpha_cum_prod.to(xt.device)[t]
+                    1.0 - self.alpha_cum_prod.to(xt.device)[t]
             )
             variance = variance * self.betas.to(xt.device)[t]
-            sigma = variance**0.5
+            sigma = variance ** 0.5
             z = torch.randn(xt.shape).to(xt.device)
 
             # OR
