@@ -18,7 +18,7 @@ class ModelParams:
 
 @dataclass
 class DiffusionParams:
-    num_timesteps: int = 5  # Updated based on ground truth
+    num_timesteps: int = 200
     beta_start: float = 0.0001
     beta_end: float = 0.02
     num_timesteps_list: List[int] = field(
@@ -29,22 +29,22 @@ class DiffusionParams:
 class TrainParams:
     task_name: str = "default"
     ckpt_name: str = "ddpm_ckpt.pth"
-    num_epochs: int = 40  # Updated based on ground truth
+    num_epochs: int = 500
     batch_size: int = 64
-    lr: float = 0.0001  # Updated based on ground truth
+    lr: float = 0.0001
 
 
 @dataclass
 class SamplingParams:
     sampling_algorithm: str = "vanilla"
-    num_samples: int = 20  # Updated based on ground truth
-    sampling_batch_size: int = 5  # Updated based on ground truth
+    num_samples: int = 20
+    sampling_batch_size: int = 100
 
 
 @dataclass
 class WandBParams:
     enable: bool = False
-    project_name: str = "diffusion_model"  # Updated based on ground truth
+    project_name: str = "diffusion_model"
 
 
 @dataclass

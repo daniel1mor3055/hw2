@@ -25,9 +25,7 @@ def train():
         wandb.init(project=config.wandb.project_name, config=config)
 
     # Create the noise scheduler
-    scheduler = LinearNoiseScheduler(
-        diffusion_config
-    )
+    scheduler = LinearNoiseScheduler(diffusion_config)
 
     # Create the dataset
     fashion_mnist = FashionMnistDataset("train")
@@ -43,20 +41,12 @@ def train():
     if not os.path.exists(train_config.task_name):
         os.mkdir(train_config.task_name)
 
-    # Load checkpoint if found
-    if os.path.exists(os.path.join(train_config.task_name, train_config.ckpt_name)):
-        print("Loading checkpoint as found one")
-        model.load_state_dict(
-            torch.load(
-                os.path.join(train_config.task_name, train_config.ckpt_name),
-                map_location=device,
-            )
-        )
-
     # Specify training parameters
     num_epochs = train_config.num_epochs
     optimizer = Adam(model.parameters(), lr=train_config.lr)
     criterion = torch.nn.MSELoss()
+
+    best_loss = float('inf')
 
     # Run training
     for epoch_idx in range(num_epochs):
@@ -81,10 +71,15 @@ def train():
             optimizer.step()
 
         avg_loss = np.mean(losses)
-        print(f"Finished epoch: {epoch_idx + 1} | Loss : {np.mean(losses):.4f}")
-        torch.save(
-            model.state_dict(), os.path.join(train_config.task_name, train_config.ckpt_name)
-        )
+        print(f"Finished epoch: {epoch_idx + 1} | Loss : {avg_loss:.4f}")
+
+        # Save the model if the current loss is the best we've seen so far
+        if avg_loss < best_loss:
+            best_loss = avg_loss
+            print(f"New best model found at epoch {epoch_idx + 1}, saving model.")
+            torch.save(
+                model.state_dict(), os.path.join(train_config.task_name, train_config.ckpt_name)
+            )
 
         if config.wandb.enable:
             wandb.log({"loss": avg_loss, "epoch": epoch_idx + 1})

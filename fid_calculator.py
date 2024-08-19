@@ -15,7 +15,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def transform_lambda(x):
     return x.repeat(3, 1, 1)
 
-
+# TODO - triple check
 class FIDCalculator:
     def __init__(self, root_dir):
         self.root_dir = root_dir
