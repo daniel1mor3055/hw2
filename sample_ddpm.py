@@ -21,6 +21,9 @@ def sample(model, scheduler, config, save_dir):
     diffusion_config = config.diffusion_params
     sampling_config = config.sampling_params
 
+    assert (sampling_config.num_samples % sampling_config.sampling_batch_size == 0), \
+        "num_samples must ba a multiple of sampling_batch_size"
+
     batch_size = sampling_config.sampling_batch_size
     num_batches = sampling_config.num_samples // batch_size
 
@@ -53,7 +56,6 @@ def sample(model, scheduler, config, save_dir):
 def infer():
     model_config = config.model_params
     train_config = config.train_params
-    sampling_config = config.sampling_params
 
     model = Unet(model_config).to(device)
     model.load_state_dict(
@@ -73,7 +75,7 @@ def infer():
 
         save_dir = os.path.join(
             train_config.task_name,
-            f"{sampling_config.sampling_algorithm}_sampling_{num_timesteps}",
+            f"vanilla_sampling_{num_timesteps}",
         )
 
         if not os.path.exists(save_dir):

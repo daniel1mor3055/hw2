@@ -76,4 +76,4 @@ if __name__ == "__main__":
         )
         print(f"Calculating FID for {sampling_dir}")
         fid_score = fid_calculator.calculate_fid(sampling_dir, fashion_mnist)
-        print(f"FID score for vanilla_sampling_{num_timesteps}: {fid_score:.4f}")
+        print(f"FID score {config.sampling_params.sampling_algorithm}_sampling_{num_timesteps}: {fid_score:.4f}")
