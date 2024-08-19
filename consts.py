@@ -36,7 +36,7 @@ class TrainParams:
 @dataclass
 class SamplingParams:
     sampling_algorithm: str = "vanilla"  # vanilla/dpm_pp/fast_dpm/ddim
-    num_samples: int = 20
+    num_samples: int = 50000
     sampling_batch_size: int = 100
 
 
