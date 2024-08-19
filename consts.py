@@ -5,44 +5,46 @@ from typing import List
 @dataclass
 class ModelParams:
     im_channels: int = 1
-    down_channels: List[int] = field(default_factory=lambda: [16, 32, 64, 128])
-    mid_channels: List[int] = field(default_factory=lambda: [128, 64, 32])
-    time_emb_dim: int = 256
+    im_size: int = 28  # Added based on ground truth
+    down_channels: List[int] = field(default_factory=lambda: [32, 64, 128, 256])
+    mid_channels: List[int] = field(default_factory=lambda: [256, 256, 128])
+    time_emb_dim: int = 128
     down_sample: List[bool] = field(default_factory=lambda: [True, True, False])
     num_down_layers: int = 2
-    num_mid_layers: int = 1
+    num_mid_layers: int = 2
     num_up_layers: int = 2
+    num_heads: int = 4  # Added based on ground truth
 
 
 @dataclass
 class DiffusionParams:
-    num_timesteps: int = 1000
+    num_timesteps: int = 5  # Updated based on ground truth
     beta_start: float = 0.0001
     beta_end: float = 0.02
-    num_timesteps_list: List[int] = field(default_factory=lambda: [5, 10, 50, 200])
-
+    num_timesteps_list: List[int] = field(
+        default_factory=lambda: [5, 10, 50, 200])  # Preserving the original list as a fallback
 
 
 @dataclass
 class TrainParams:
     task_name: str = "default"
     ckpt_name: str = "ddpm_ckpt.pth"
-    num_epochs: int = 10
+    num_epochs: int = 40  # Updated based on ground truth
     batch_size: int = 64
-    lr: float = 0.001
+    lr: float = 0.0001  # Updated based on ground truth
 
 
 @dataclass
 class SamplingParams:
     sampling_algorithm: str = "vanilla"
-    num_samples: int = 100
-    sampling_batch_size: int = 10
+    num_samples: int = 20  # Updated based on ground truth
+    sampling_batch_size: int = 5  # Updated based on ground truth
 
 
 @dataclass
 class WandBParams:
     enable: bool = False
-    project_name: str = "ddpm_experiment"
+    project_name: str = "diffusion_model"  # Updated based on ground truth
 
 
 @dataclass
@@ -54,5 +56,5 @@ class Config:
     wandb: WandBParams = WandBParams()
 
 
-# Config instance with default values
+# Config instance with values from ground truth
 config = Config()
