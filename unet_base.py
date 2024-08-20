@@ -16,8 +16,8 @@ def get_time_embedding(time_steps, temb_dim):
 
     factor = 10000 ** (
         (
-                torch.arange(start=0, end=temb_dim // 2, dtype=torch.float32, device=time_steps.device)
-                / (temb_dim // 2)
+            torch.arange(start=0, end=temb_dim // 2, dtype=torch.float32, device=time_steps.device)
+            / (temb_dim // 2)
         )
     )
 
@@ -36,7 +36,7 @@ class DownBlock(nn.Module):
     """
 
     def __init__(
-            self, in_channels, out_channels, t_emb_dim, down_sample=True, num_heads=4, num_layers=1
+        self, in_channels, out_channels, t_emb_dim, down_sample=True, num_heads=4, num_layers=1
     ):
         super().__init__()
         self.num_layers = num_layers
@@ -210,7 +210,7 @@ class MidBlock(nn.Module):
             resnet_input = out  # shape: (B, out_mid_C , H,W)
             out = self.resnet_conv_first[i + 1](out)  # shape: (B, out_mid_C , H,W)
             out = (
-                    out + self.t_emb_layers[i + 1](t_emb)[:, :, None, None]
+                out + self.t_emb_layers[i + 1](t_emb)[:, :, None, None]
             )  # shape: (B, out_mid_C , H,W)
             out = self.resnet_conv_second[i + 1](out)  # shape: (B, out_mid_C , H,W)
             out = out + self.residual_input_conv[i + 1](resnet_input)  # shape: (B, out_mid_C , H,W)
@@ -229,7 +229,7 @@ class UpBlock(nn.Module):
     """
 
     def __init__(
-            self, in_channels, out_channels, t_emb_dim, up_sample=True, num_heads=4, num_layers=1
+        self, in_channels, out_channels, t_emb_dim, up_sample=True, num_heads=4, num_layers=1
     ):
         super().__init__()
         self.num_layers = num_layers
@@ -341,7 +341,9 @@ class Unet(nn.Module):
         )
 
         self.up_sample = list(reversed(self.down_sample))
-        self.conv_in = nn.Conv2d(self.im_channels, self.down_channels[0], kernel_size=3, padding=(1, 1))
+        self.conv_in = nn.Conv2d(
+            self.im_channels, self.down_channels[0], kernel_size=3, padding=(1, 1)
+        )
 
         self.downs = nn.ModuleList([])
         for i in range(len(self.down_channels) - 1):

@@ -41,8 +41,8 @@ class LinearNoiseScheduler:
             sqrt_one_minus_alpha_cum_prod = sqrt_one_minus_alpha_cum_prod.unsqueeze(-1)
 
         return (
-                sqrt_alpha_cum_prod.to(original.device) * original
-                + sqrt_one_minus_alpha_cum_prod.to(original.device) * noise
+            sqrt_alpha_cum_prod.to(original.device) * original
+            + sqrt_one_minus_alpha_cum_prod.to(original.device) * noise
         )
 
     def sample_prev_timestep(self, xt, noise_pred, t):
@@ -68,10 +68,10 @@ class LinearNoiseScheduler:
             return mean, x0
         else:
             variance = (1 - self.alpha_cum_prod.to(xt.device)[t - 1]) / (
-                    1.0 - self.alpha_cum_prod.to(xt.device)[t]
+                1.0 - self.alpha_cum_prod.to(xt.device)[t]
             )
             variance = variance * self.betas.to(xt.device)[t]
-            sigma = variance ** 0.5
+            sigma = variance**0.5
             z = torch.randn(xt.shape).to(xt.device)
 
             return mean + sigma * z, x0

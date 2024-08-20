@@ -21,7 +21,7 @@ class DiffusionParams:
     num_timesteps: int = 200
     beta_start: float = 0.0001
     beta_end: float = 0.02
-    num_timesteps_list: List[int] = field(default_factory=lambda: [5, 10, 50, 200])
+    num_timesteps_list: List[int] = field(default_factory=lambda: [5, 10, 50, 200][::-1])
 
 
 @dataclass
@@ -35,7 +35,7 @@ class TrainParams:
 
 @dataclass
 class SamplingParams:
-    sampling_algorithm: str = "vanilla"  # vanilla/dpm_pp/fast_dpm/ddim
+    sampling_algorithm: str = "ddim"  # vanilla/dpm_pp/fast_dpm/ddim
     num_samples: int = 50000
     sampling_batch_size: int = 100
 

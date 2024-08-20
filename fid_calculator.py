@@ -31,8 +31,9 @@ class FIDCalculator:
         )
 
     def calculate_fid(self, sampling_dir, fashion_mnist):
-        fashion_mnist_loader = DataLoader(fashion_mnist, batch_size=config.train_params.batch_size, shuffle=True,
-                                          num_workers=4)
+        fashion_mnist_loader = DataLoader(
+            fashion_mnist, batch_size=config.train_params.batch_size, shuffle=True, num_workers=4
+        )
 
         self.load_generated_images(sampling_dir)
         for batch in tqdm(fashion_mnist_loader, desc="Real images"):
@@ -65,9 +66,7 @@ if __name__ == "__main__":
 
     fid_calculator = FIDCalculator(root_dir=root_dir)
 
-    fashion_mnist = FashionMnistDataset(
-        "train", transform=fid_calculator.transform
-    )
+    fashion_mnist = FashionMnistDataset("train", transform=fid_calculator.transform)
 
     for num_timesteps in config.diffusion_params.num_timesteps_list:
         sampling_dir = os.path.join(
@@ -75,4 +74,7 @@ if __name__ == "__main__":
         )
         print(f"Calculating FID for {sampling_dir}")
         fid_score = fid_calculator.calculate_fid(sampling_dir, fashion_mnist)
-        print(f"FID score {config.sampling_params.sampling_algorithm}_sampling_{num_timesteps}: {fid_score:.4f}")
+        print(
+            f"FID score {config.sampling_params.sampling_algorithm}_sampling_{num_timesteps}:"
+            f" {fid_score:.4f}"
+        )

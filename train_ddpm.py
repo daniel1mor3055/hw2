@@ -21,6 +21,7 @@ def train():
 
     if config.wandb.enable:
         import wandb
+
         wandb.login(key="5fda0926085bc8963be5e43c4e501d992e35abe8")
         wandb.init(project=config.wandb.project_name, config=config)
 
@@ -41,7 +42,7 @@ def train():
     optimizer = Adam(model.parameters(), lr=train_config.lr)
     criterion = torch.nn.MSELoss()
 
-    best_loss = float('inf')
+    best_loss = float("inf")
 
     for epoch_idx in range(num_epochs):
         losses = []

@@ -20,14 +20,17 @@ def sample(model, config, save_dir, num_timesteps):
     model_config = config.model_params
     sampling_config = config.sampling_params
 
-    assert (sampling_config.num_samples % sampling_config.sampling_batch_size == 0), \
-        "num_samples must ba a multiple of sampling_batch_size"
+    assert (
+        sampling_config.num_samples % sampling_config.sampling_batch_size == 0
+    ), "num_samples must ba a multiple of sampling_batch_size"
 
     num_batches = sampling_config.num_samples // sampling_config.sampling_batch_size
 
     for batch_idx in tqdm(range(num_batches)):
         # Create the noise scheduler
-        scheduler = DPMSolverMultistepScheduler(num_train_timesteps=config.diffusion_params.num_timesteps)
+        scheduler = DPMSolverMultistepScheduler(
+            num_train_timesteps=config.diffusion_params.num_timesteps
+        )
         scheduler.config.algorithm_type = "dpmsolver++"
         scheduler.set_timesteps(num_timesteps)
 
@@ -54,7 +57,11 @@ def sample(model, config, save_dir, num_timesteps):
 
         for j in range(ims.size(0)):
             img = torchvision.transforms.ToPILImage()(ims[j])
-            img.save(os.path.join(save_dir, f"sample_{batch_idx * sampling_config.sampling_batch_size + j}.png"))
+            img.save(
+                os.path.join(
+                    save_dir, f"sample_{batch_idx * sampling_config.sampling_batch_size + j}.png"
+                )
+            )
             img.close()
 
 

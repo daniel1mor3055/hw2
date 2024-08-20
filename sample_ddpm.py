@@ -21,8 +21,9 @@ def sample(model, scheduler, config, save_dir):
     diffusion_config = config.diffusion_params
     sampling_config = config.sampling_params
 
-    assert (sampling_config.num_samples % sampling_config.sampling_batch_size == 0), \
-        "num_samples must ba a multiple of sampling_batch_size"
+    assert (
+        sampling_config.num_samples % sampling_config.sampling_batch_size == 0
+    ), "num_samples must ba a multiple of sampling_batch_size"
 
     num_batches = sampling_config.num_samples // sampling_config.sampling_batch_size
 
@@ -48,7 +49,11 @@ def sample(model, scheduler, config, save_dir):
 
         for j in range(ims.size(0)):
             img = torchvision.transforms.ToPILImage()(ims[j])
-            img.save(os.path.join(save_dir, f"sample_{batch_idx * sampling_config.sampling_batch_size + j}.png"))
+            img.save(
+                os.path.join(
+                    save_dir, f"sample_{batch_idx * sampling_config.sampling_batch_size + j}.png"
+                )
+            )
             img.close()
 
 
@@ -68,9 +73,7 @@ def infer():
         # Update diffusion_config with current num_timesteps
         config.diffusion_params.num_timesteps = num_timesteps
 
-        scheduler = LinearNoiseScheduler(
-            config.diffusion_params
-        )
+        scheduler = LinearNoiseScheduler(config.diffusion_params)
 
         save_dir = os.path.join(
             train_config.task_name,
