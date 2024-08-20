@@ -2,6 +2,7 @@ import os
 
 import numpy as np
 import torch
+import torchvision
 from torchvision.utils import save_image
 from tqdm import tqdm
 
@@ -147,7 +148,9 @@ def generate(diffusion_config, S, generation_param, n_generate, batchsize, n_exi
         # save image
         for j, x in enumerate(rescale(Xi)):
             index = i * batchsize + j
-            save_image(x, fp=os.path.join(save_dir, f"sample_{index}.png"))
+            x = torchvision.transforms.ToPILImage()(x)
+            x.save(os.path.join(save_dir, f"sample_{index}.png"))
+            x.close()
 
 
 if __name__ == '__main__':
