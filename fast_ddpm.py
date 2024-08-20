@@ -3,16 +3,10 @@ import os
 import numpy as np
 import torch
 import torchvision
-from torchvision.utils import save_image
 from tqdm import tqdm
 
-from consts import config
-from fast_ddpm_config import diffusion_config
+from consts import DiffusionParams, config
 from unet_base import Unet
-
-np.random.seed(0)
-
-torch.manual_seed(0)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -54,13 +48,19 @@ def calc_diffusion_hyperparams(T, beta_0, beta_T):
     Sigma = torch.sqrt(Beta_tilde)
 
     _dh = {}
-    _dh["T"], _dh["Beta"], _dh["Alpha"], _dh["Alpha_bar"], _dh["Sigma"] = T, Beta, Alpha, Alpha_bar, Sigma
+    _dh["T"], _dh["Beta"], _dh["Alpha"], _dh["Alpha_bar"], _dh["Sigma"] = (
+        T,
+        Beta,
+        Alpha,
+        Alpha_bar,
+        Sigma,
+    )
     diffusion_hyperparams = _dh
     return diffusion_hyperparams
 
 
-def get_STEP_step(S):
-    c = (diffusion_config["T"] - 1.0) / (S - 1.0)
+def get_STEP_step(S, T):
+    c = (T - 1.0) / (S - 1.0)
     list_tau = [np.floor(i * c) for i in range(S)]
 
     return [int(s) for s in list_tau]
@@ -103,24 +103,52 @@ def STEP_sampling(net, size, diffusion_hyperparams, user_defined_steps, kappa):
                 sigma = torch.tensor(0.0)
             else:
                 alpha_next = Alpha_bar[user_defined_steps[i + 1]]
-                sigma = kappa * torch.sqrt((1 - alpha_next) / (1 - Alpha_bar[tau]) * (1 - Alpha_bar[tau] / alpha_next))
+                sigma = kappa * torch.sqrt(
+                    (1 - alpha_next) / (1 - Alpha_bar[tau]) * (1 - Alpha_bar[tau] / alpha_next)
+                )
             x *= torch.sqrt(alpha_next / Alpha_bar[tau])
-            c = torch.sqrt(1 - alpha_next - sigma ** 2) - torch.sqrt(1 - Alpha_bar[tau]) * torch.sqrt(
-                alpha_next / Alpha_bar[tau])
+            c = torch.sqrt(1 - alpha_next - sigma**2) - torch.sqrt(
+                1 - Alpha_bar[tau]
+            ) * torch.sqrt(alpha_next / Alpha_bar[tau])
             x += c * epsilon_theta + sigma * std_normal(size)
     return x
 
 
-def generate(diffusion_config, S, generation_param, n_generate, batchsize, n_exist):
+def generate(diffusion_config: DiffusionParams, S, n_generate, batchsize, save_dir, model):
+
+    assert n_generate % batchsize == 0, "num_samples must be a multiple of sampling_batch_size"
+    model_config = config.model_params
+
+    diffusion_hyperparams = calc_diffusion_hyperparams(
+        T=diffusion_config.num_timesteps,
+        beta_0=diffusion_config.beta_start,
+        beta_T=diffusion_config.beta_end,
+    )
+    for key in diffusion_hyperparams:
+        if key != "T":
+            diffusion_hyperparams[key] = diffusion_hyperparams[key].to(device)
+
+    C, H, W = model_config.im_channels, model_config.im_size, model_config.im_size
+    user_defined_steps = get_STEP_step(S=S, T=diffusion_config.num_timesteps)
+    for i in tqdm(range(n_generate // batchsize), desc=f"{S}_sampling_timestamps"):
+        Xi = STEP_sampling(
+            model,
+            (batchsize, C, H, W),
+            diffusion_hyperparams,
+            user_defined_steps,
+            kappa=0,
+        )
+        for j, x in enumerate(rescale(Xi)):
+            index = i * batchsize + j
+            img = torchvision.transforms.ToPILImage()(x)
+            img.save(os.path.join(save_dir, f"sample_{index}.png"))
+            img.close()
+
+
+if __name__ == "__main__":
+
     model_config = config.model_params
     train_config = config.train_params
-
-    save_dir = os.path.join(
-        train_config.task_name,
-        f"fast_dpm_sampling_{S}",
-    )
-
-    # TODO os.mkdir if not exist
 
     model = Unet(model_config).to(device)
     model.load_state_dict(
@@ -129,46 +157,18 @@ def generate(diffusion_config, S, generation_param, n_generate, batchsize, n_exi
         )
     )
     model.eval()
+    for S in config.diffusion_params.num_timesteps_list:
+        n_generate = config.sampling_params.num_samples
+        sampling_batch_size = config.sampling_params.sampling_batch_size
 
-    # map diffusion hyperparameters to gpu
-    diffusion_hyperparams = calc_diffusion_hyperparams(**diffusion_config)
-    for key in diffusion_hyperparams:
-        if key != "T":
-            diffusion_hyperparams[key] = diffusion_hyperparams[key].to(device)
+        # Set directory name based on num_timesteps
+        save_dir = os.path.join(
+            train_config.task_name,
+            f"fast_dpm_sampling_{S}",
+        )
 
-    # sampling
-    C, H, W = model_config.im_channels, model_config.im_size, model_config.im_size
-    for i in tqdm(range(n_exist // batchsize, n_generate // batchsize)):
-        user_defined_steps = generation_param["user_defined_steps"]
-        Xi = STEP_sampling(model, (batchsize, C, H, W),
-                           diffusion_hyperparams,
-                           user_defined_steps,
-                           kappa=generation_param["kappa"])
+        if not os.path.exists(save_dir):
+            os.mkdir(save_dir)
 
-        # save image
-        for j, x in enumerate(rescale(Xi)):
-            index = i * batchsize + j
-            x = torchvision.transforms.ToPILImage()(x)
-            x.save(os.path.join(save_dir, f"sample_{index}.png"))
-            x.close()
-
-
-if __name__ == '__main__':
-    kappa = 0.0  # can change to 1.0 means dpm
-    approxdiff = 'STEP'  # can change to VAR
-
-    S = 5  # [5,10,50,200]
-
-    user_defined_steps = get_STEP_step(S)
-
-    generation_param = {"kappa": kappa,
-                        "user_defined_steps": user_defined_steps}
-
-    n_generate = 50000
-
-    n_exist = 0
-
-    sampling_batch_size = 100  # TODO take from our config
-
-    model_path = os.path.join('path to our model .pth')
-    generate(diffusion_config, S, generation_param, n_generate, sampling_batch_size, n_exist)
+        with torch.no_grad():
+            generate(config.diffusion_params, S, n_generate, sampling_batch_size, save_dir, model)
