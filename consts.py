@@ -35,7 +35,7 @@ class TrainParams:
 
 @dataclass
 class SamplingParams:
-    sampling_algorithm: str = "fast_dpm"  # vanilla/dpm_pp/fast_dpm/ddim
+    sampling_algorithm: str = "fast_dpm_var"  # vanilla/dpm_pp/fast_dpm/fast_dpm_var/ddim
     num_samples: int = 50000
     sampling_batch_size: int = 100
 
