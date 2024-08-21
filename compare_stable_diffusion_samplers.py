@@ -8,6 +8,8 @@ from diffusers import (
     DDPMScheduler,
 )
 
+from FastDPMScheduler import FastDPMScheduler
+
 # Define the prompt and the different number of steps to test
 prompt = "A cat wearing a spacesuit"
 steps_list = [5, 10, 50, 100]
@@ -21,10 +23,10 @@ pipe = StableDiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-2-1
 
 # Dictionary of samplers to test
 samplers = {
-    "vanilla": DDPMScheduler.from_config(pipe.scheduler.config),
-    "dpmsolver++": DPMSolverMultistepScheduler.from_config(pipe.scheduler.config),
-    "ddim": DDIMScheduler.from_config(pipe.scheduler.config),
-    # "fastdpm": None  # FastDPM implementation is not available in diffusers yet
+    # "vanilla": DDPMScheduler.from_config(pipe.scheduler.config),
+    # "dpmsolver++": DPMSolverMultistepScheduler.from_config(pipe.scheduler.config),
+    # "ddim": DDIMScheduler.from_config(pipe.scheduler.config),
+    "fastdpm": FastDPMScheduler(num_train_timesteps=1000, beta_start=0.0001, beta_end=0.02)
 }
 
 # Test each sampler
