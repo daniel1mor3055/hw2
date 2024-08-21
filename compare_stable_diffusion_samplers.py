@@ -10,7 +10,7 @@ from diffusers import (
 
 # Define the prompt and the different number of steps to test
 prompt = "A cat wearing a spacesuit"
-steps_list = [5]
+steps_list = [5, 10, 50, 100]
 output_dir = "./stable_diffusion_outputs"
 
 if not os.path.exists(output_dir):
@@ -44,7 +44,7 @@ for sampler_name, scheduler in samplers.items():
 
         # Generate image
         with torch.no_grad():
-            image = pipe(prompt=prompt,num_inference_steps=steps).images[0]
+            image = pipe(prompt=prompt, num_inference_steps=steps).images[0]
 
         # Save the image
         image_save_path = os.path.join(output_dir, f"{sampler_name}_steps_{steps}.png")
