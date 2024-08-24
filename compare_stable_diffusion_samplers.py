@@ -26,7 +26,11 @@ samplers = {
     # "vanilla": DDPMScheduler.from_config(pipe.scheduler.config),
     # "dpmsolver++": DPMSolverMultistepScheduler.from_config(pipe.scheduler.config),
     # "ddim": DDIMScheduler.from_config(pipe.scheduler.config),
-    "fastdpm": FastDPMScheduler(num_timesteps=1000, beta_start=0.0001, beta_end=0.02)
+    "fastdpm": FastDPMScheduler(
+        num_timesteps=pipe.scheduler.config["num_train_timesteps"],
+        beta_start=pipe.scheduler.config["beta_start"],
+        beta_end=pipe.scheduler.config["beta_end"],
+    )
 }
 
 # Test each sampler

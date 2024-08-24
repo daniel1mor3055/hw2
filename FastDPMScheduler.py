@@ -7,7 +7,9 @@ class FastDPMScheduler:
         self.num_train_timesteps = num_timesteps
         self.beta_start = beta_start
         self.beta_end = beta_end
-        self.device = device if device else torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = (
+            device if device else torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        )
         self.diffusion_hyperparams = self.calc_diffusion_hyperparams()
         self.init_noise_sigma = 1.0
         self.order = 1
@@ -24,27 +26,27 @@ class FastDPMScheduler:
     def std_normal(self, size):
         return torch.normal(0, 1, size=size).to(self.device)
 
-    def get_schedule(self, timesteps):
-        alphas_cumprod = self.alphas_cumprod
-        return alphas_cumprod[timesteps], torch.sqrt(1 - alphas_cumprod[timesteps])
-
     def step(self, model_output, timestep, sample, return_dict=False, kappa=0.0):
         Alpha_bar = self.diffusion_hyperparams["Alpha_bar"]
         if timestep == self.timesteps[-1]:  # the next step is to generate x_0
             alpha_next = torch.tensor(1.0)
             sigma = torch.tensor(0.0)
         else:
-            alpha_next = Alpha_bar[self.timesteps[(self.timesteps == timestep).nonzero(as_tuple=True)[0].item() + 1]]
+            alpha_next = Alpha_bar[
+                self.timesteps[(self.timesteps == timestep).nonzero(as_tuple=True)[0].item() + 1]
+            ]
             sigma = kappa * torch.sqrt(
-                (1 - alpha_next) / (1 - Alpha_bar[timestep.item()]) * (1 - Alpha_bar[timestep.item()] / alpha_next)
+                (1 - alpha_next)
+                / (1 - Alpha_bar[timestep.item()])
+                * (1 - Alpha_bar[timestep.item()] / alpha_next)
             )
         sample *= torch.sqrt(alpha_next / Alpha_bar[timestep.item()])
-        c = torch.sqrt(1 - alpha_next - sigma ** 2) - torch.sqrt(
+        c = torch.sqrt(1 - alpha_next - sigma**2) - torch.sqrt(
             1 - Alpha_bar[timestep.item()]
         ) * torch.sqrt(alpha_next / Alpha_bar[timestep.item()])
         sample += c * model_output + sigma * self.std_normal(sample.size())
 
-        return sample
+        return (sample,)
 
     def calc_diffusion_hyperparams(self):
         Beta = torch.linspace(self.beta_start, self.beta_end, self.num_train_timesteps)
